@@ -321,7 +321,7 @@
 */
 
 			// Publish
-			elseif(preg_match('/^\/publish\/([^\/]+)\/$/i', $callback['pageroot'], $match)){
+			if(preg_match('/^\/publish\/([^\/]+)\/$/i', $callback['pageroot'], $match)){
 				$handle = $match[1];
 
 				switch($callback['context']['page']){
