@@ -1,9 +1,9 @@
 User Access Control
 ------------------------------------
 
-Version: 1.0
+Version: Super Duper Alpha
 Author: Alistair Kearney (alistair@symphony-cms.com)
 Build Date: 26th May 2010
-Requirements: Symphony 3 or later
+Requirements: Symphony 3 experimental or later
 
-A fine grained Access Control layer for the Symphony
+This extension does not work yet. Requires unreleased, experimental, Symphony 3 code.
