@@ -2,7 +2,7 @@
 
 	require_once(LIB . '/class.administrationpage.php');
 
-	Class contentLogin extends AdministrationPage{
+	Class contentExtensionUACLogin extends AdministrationPage{
 
 		public $_context;
 		private $invalid_credentials;
@@ -41,16 +41,16 @@
 
 		function view(){
 			Widget::init($this);
-			
+			/*
 			$emergency = false;
 			if(isset($this->_context[0]) && in_array(strlen($this->_context[0]), array(6, 8))){
 				$emergency = $this->__loginFromToken($this->_context[0]);
 			}
 
 			if(!$emergency && Administration::instance()->isLoggedIn()) redirect(ADMIN_URL . '/');
-
+*/
 			$fieldset = $this->createElement('fieldset');
-			
+			/*
 			if($this->_context[0] == 'retrieve-password'):
 
 				if(isset($this->_email_sent) && $this->_email_sent){
@@ -107,7 +107,7 @@
 				if(!preg_match('@\/symphony\/login\/@i', $_SERVER['REQUEST_URI'])) $div->appendChild(Widget::Input('redirect', $_SERVER['REQUEST_URI'], 'hidden'));
 				$this->Form->appendChild($div);
 
-			else:
+			else:*/
 				$label = Widget::Label(__('Username'));
 				$label->appendChild(Widget::Input('username'));
 				$fieldset->appendChild($label);
@@ -152,7 +152,7 @@
 				if(!preg_match('@\/symphony\/login\/@i', $_SERVER['REQUEST_URI'])) $div->appendChild(Widget::Input('redirect', $_SERVER['REQUEST_URI'], 'hidden'));
 				$this->Form->appendChild($div);
 
-			endif;
+			//endif;
 
 		}
 

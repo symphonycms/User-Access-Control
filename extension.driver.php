@@ -4,6 +4,8 @@
 
 	Class extensionUserAccessControl implements iExtension{
 		
+		private static $Cookie;
+		
 		public function about(){
 			return (object)array(
 				'name' => 'User Access Control',
@@ -19,7 +21,18 @@
 
 		public function getSubscribedDelegates(){
 			return array(
+				array(
+					'delegate' => 'AdminPagePreResolve',
+					'page' => '/administration/',
+					'callback' => 'cbCheckAdministrationLoginStatus'
+				),
 				
+				array(
+					'delegate' => 'SymphonyInitialisationComplete',
+					'page' => '*',
+					'callback' => 'cbInitialiseCookie'
+				),
+			/*
 				array(
 					'delegate' => 'SectionPostSave',
 					'page' => '/blueprints/sections/new/',
@@ -67,9 +80,250 @@
 					'page' => '/administration/',
 					'callback' => 'cbCheckPagePermissions'
 				),
+			*/
 			);
 		}
+		/*
+			public function isLoggedIn(){
 
+				if ($this->User) return true;
+
+				if (isset($_REQUEST['auth-token']) && $_REQUEST['auth-token'] && strlen($_REQUEST['auth-token']) == 8) {
+					return $this->loginFromToken($_REQUEST['auth-token']);
+				}
+
+				$username = $this->Cookie->get('username');
+				$password = $this->Cookie->get('pass');
+
+				if(strlen(trim($username)) > 0 && strlen(trim($password)) > 0){
+					$result = Symphony::Database()->query(
+						"
+							SELECT
+								u.id
+							FROM
+								tbl_users AS u
+							WHERE
+								u.username = '%s'
+								AND u.password = '%s'
+							LIMIT 1
+						",
+						array($username, $password)
+					);
+
+					if ($result->valid()) {
+						$this->_user_id = $result->current()->id;
+
+						Symphony::Database()->update(
+							'tbl_users',
+							array('last_seen' => DateTimeObj::get('Y-m-d H:i:s')),
+							array($this->_user_id),
+							"`id` = '%s'"
+						);
+
+						$this->User = User::load($this->_user_id);
+						$this->reloadLangFromUserPreference();
+
+						return true;
+					}
+				}
+
+				$this->Cookie->expire();
+				return false;
+			}
+
+			public function logout(){
+				$this->Cookie->expire();
+			}
+
+			public function login($username, $password, $isHash = false) {
+				if (strlen(trim($username)) > 0 && strlen(trim($password)) > 0) {
+					if (!$isHash) $password = md5($password);
+
+					$result = Symphony::Database()->query(
+						"
+							SELECT
+								u.id
+							FROM
+								tbl_users AS u
+							WHERE
+								u.username = '%s'
+								AND u.password = '%s'
+							LIMIT 1
+						",
+						array($username, $password)
+					);
+
+					if ($result->valid()) {
+						$this->_user_id = $result->current()->id;
+
+						$this->User = User::load($this->_user_id);
+						$this->Cookie->set('username', $username);
+						$this->Cookie->set('pass', $password);
+
+						Symphony::Database()->update(
+							'tbl_users',
+							array('last_seen' => DateTimeObj::get('Y-m-d H:i:s')),
+							array($this->_user_id),
+							"`id` = '%d'"
+						);
+
+						$this->reloadLangFromUserPreference();
+
+						return true;
+					}
+				}
+
+				return false;
+			}
+
+			public function loginFromToken($token){
+				$token = Symphony::Database()->escape($token);
+
+				if (strlen(trim($token)) == 0) return false;
+
+				if (strlen($token) == 6){
+					$result = Symphony::Database()->query("
+							SELECT
+								`u`.id, `u`.username, `u`.password
+							FROM
+								`tbl_users` AS u, `tbl_forgotpass` AS f
+							WHERE
+								`u`.id = `f`.user_id
+							AND
+								`f`.expiry > '%s'
+							AND
+								`f`.token = '%s'
+							LIMIT 1
+						",
+						array(
+							DateTimeObj::getGMT('c'),
+							$token
+						)
+					);
+
+					Symphony::Database()->delete('tbl_forgotpass', array($token), "`token` = '%s'");
+				}
+
+				else{
+					$result = Symphony::Database()->query("
+							SELECT
+								id, username, password
+							FROM
+								`tbl_users`
+							WHERE
+								SUBSTR(MD5(CONCAT(`username`, `password`)), 1, 8) = '%s'
+							AND
+								auth_token_active = 'yes'
+							LIMIT 1
+						",
+						array($token)
+					);
+				}
+
+				if($result->valid()) {
+					$row = $result->current();
+					$this->_user_id = $row->id;
+
+					$this->User = User::load($this->_user_id);
+					$this->Cookie->set('username', $row->username);
+					$this->Cookie->set('pass', $row->password);
+
+					Symphony::Database()->update(
+						'tbl_authors',
+						array('last_seen' => DateTimeObj::getGMT('Y-m-d H:i:s')),
+						array($this->_user_id),
+						"`id` = '%d'"
+					);
+
+					$this->reloadLangFromUserPreference();
+
+					return true;
+				}
+
+				return false;
+
+			}
+
+			public function reloadLangFromUserPreference(){
+
+				$lang = $this->User->language;
+				if($lang && $lang != self::lang()){
+					self::$_lang = $lang;
+					if($lang != 'en') {
+						Lang::loadAll();
+					}
+					else {
+						// As there is no English dictionary the default dictionary needs to be cleared
+						Lang::clear();
+					}
+				}
+			}
+
+		*/
+		
+		
+		public function login($username, $password, $isHash = false) {
+			if (strlen(trim($username)) > 0 && strlen(trim($password)) > 0) {
+				if (!$isHash) $password = md5($password);
+
+				$result = Symphony::Database()->query(
+					"
+						SELECT
+							u.id
+						FROM
+							tbl_users AS u
+						WHERE
+							u.username = '%s'
+							AND u.password = '%s'
+						LIMIT 1
+					",
+					array($username, $password)
+				);
+
+				if ($result->valid()) {
+					$this->_user_id = $result->current()->id;
+
+					$this->User = User::load($this->_user_id);
+					$this->Cookie->set('username', $username);
+					$this->Cookie->set('pass', $password);
+
+					Symphony::Database()->update(
+						'tbl_users',
+						array('last_seen' => DateTimeObj::get('Y-m-d H:i:s')),
+						array($this->_user_id),
+						"`id` = '%d'"
+					);
+
+					$this->reloadLangFromUserPreference();
+
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+
+		
+		public function cbInitialiseCookie(){
+
+			require_once('lib/class.cookie.php');
+			
+			try{
+				$cookie_path = parse_url(URL, PHP_URL_PATH);
+				$cookie_path = '/' . trim($cookie_path, '/');
+			}
+			catch(Exception $e){
+				$cookie_path = '/';
+			}
+
+			define_safe('UAC_COOKIE_PATH', $cookie_path);
+			define_safe('UAC_COOKIE_PREFIX', Symphony::Configuration()->uac()->{'cookie-prefix'});
+
+			self::$Cookie = new Cookie(UAC_COOKIE_PREFIX, TWO_WEEKS, UAC_COOKIE_PATH, NULL, 'tbl_uac_sessions');
+
+		}
+			
 		public function fetchNavigation(){
 			return array(
 				array(
@@ -78,6 +332,10 @@
 					'link' => '/roles/'
 				)
 			);
+		}
+		
+		public function cbCheckAdministrationLoginStatus(array $context=NULL){
+			//$context['page'] = '/extension/uac/login/';
 		}
 		
 		public function cbRemoveSectionPublishPermissions(array $context=NULL){
@@ -655,6 +913,9 @@
 					'level' => $p[2]
 				));
 			}
+			
+			Symphony::Configuration()->uac()->{'cookie-prefix'} = 'sym-uac';
+			Symphony::Configuration()->uac()->save();
 			
 			return true;
 

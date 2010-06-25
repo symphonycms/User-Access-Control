@@ -1,6 +1,6 @@
 <?php
 
-	require_once(LIB . '/class.session.php');
+	require_once('class.session.php');
 
 	Class Cookie{
 		
@@ -11,14 +11,15 @@
 		private $_path;
 		private $_domain;
 		
-		public function __construct($index, $timeout = 0, $path = '/', $domain = NULL) {
+		public function __construct($index, $timeout = 0, $path = '/', $domain=NULL, $session_table='tbl_sessions') {
 			$this->_index = $index;
 			$this->_timeout = $timeout;
 			$this->_path = $path;
 			$this->_domain = $domain;
-
-			// Symphony->__construct() creates Cookie before Database is created. So we need to start session AFTER Cookie is created.
 			$this->_session = false;
+			$this->_session_table = $session_table;
+			
+			$this->__init();
 		}
 		
 		public function set($name, $value) {
@@ -54,7 +55,7 @@
 		private function __init() {
 			if ($this->_session) return $this->_session;
 
-			$this->_session = Session::start($this->_timeout, $this->_path, $this->_domain);
+			$this->_session = Session::start($this->_timeout, $this->_path, $this->_domain, $this->_session_table);
 			if (!$this->_session) return false;
 
 			if (!isset($_SESSION[$this->_index])) $_SESSION[$this->_index] = array();
@@ -67,4 +68,3 @@
 	
 	}
 
-?>

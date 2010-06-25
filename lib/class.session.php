@@ -11,13 +11,16 @@
 
 		private static $_initialized;
 		private static $_registered;
+		private static $_session_table;
 
-		public static function start($lifetime = 0, $path = '/', $domain = NULL) {
+		public static function start($lifetime = 0, $path = '/', $domain=NULL, $session_table='tbl_sessions'){
 
-			if (!self::$_initialized) {
+			if (!self::$_initialized){
 
 				if(!is_object(Symphony::Database()) || !Symphony::Database()->connected()) return false;
-
+				
+				self::$_session_table = $session_table;
+				
 				$cache = Cache::instance()->read('_session_config');
 				
 				if(is_null($cache) || $cache === false){
@@ -56,9 +59,9 @@
 			return session_id();
 		}
 
-		public static function create() {
+		public static function create(){
 			Symphony::Database()->query(
-				"CREATE TABLE IF NOT EXISTS `tbl_sessions` (
+				"CREATE TABLE IF NOT EXISTS `".self::$_session_table."` (
 				  `session` varchar(255) NOT NULL,
 				  `session_expires` int(10) unsigned NOT NULL default '0',
 				  `session_data` text,
@@ -67,7 +70,7 @@
 			);
 		}
 
-		public static function getDomain() {
+		public static function getDomain(){
 
 			if(isset($_SERVER['HTTP_HOST'])){
 
@@ -94,7 +97,7 @@
 
 		}
 
-		public static function open() {
+		public static function open(){
 			if (!self::$_registered) {
 				register_shutdown_function('session_write_close');
 				self::$_registered = true;
@@ -107,12 +110,12 @@
 			return true;
 		}
 
-		public static function read($id) {
+		public static function read($id){
 			$result = Symphony::Database()->query("
 					SELECT
 						`session_data`
 					FROM
-						`tbl_sessions`
+						`".self::$_session_table."`
 					WHERE
 						`session` = '%s'
 					LIMIT
@@ -128,24 +131,22 @@
 			return null;
 		}
 
-		public static function write($id, $data) {
+		public static function write($id, $data){
 			$fields = array(
 				'session' => $id,
 				'session_expires' => time(),
 				'session_data' => $data
 			);
 
-			return Symphony::Database()->insert('tbl_sessions', $fields, Database::UPDATE_ON_DUPLICATE);
+			return Symphony::Database()->insert(self::$_session_table, $fields, Database::UPDATE_ON_DUPLICATE);
 		}
 
-		public static function destroy($id) {
-			return Symphony::Database()->delete('tbl_sessions', array($id), "`session` = '%s'");
+		public static function destroy($id){
+			return Symphony::Database()->delete(self::$_session_table, array($id), "`session` = '%s'");
 		}
 
-		public static function gc($max) {
-			Symphony::$Log->pushToLog("Session: Taking out the trash!", E_NOTICE, true);
-
-			return Symphony::Database()->delete('tbl_sessions', array(time() - $max), "`session_expires` <= '%s'");
+		public static function gc($max){
+			return Symphony::Database()->delete(self::$_session_table, array(time() - $max), "`session_expires` <= '%s'");
 		}
 	}
 
